@@ -38,6 +38,10 @@ test('class', function(){
 	css = 'div[className=test9][className=test9].test9';
 	html = css2html(css);
 	equal(html[0].className, 'test9 test9 test9', css);
+	
+	css = 'img[src=blank.gif]';
+	html = css2html(css);	
+	ok(!html[0].className, css);
 });
 
 test('id', function(){
@@ -76,6 +80,10 @@ test('id', function(){
 	css = 'div#test9[id=test9]';
 	html = css2html(css);
 	equal(html[0].id, 'test9', css);
+	
+	css = 'a[href=#top]';
+	html = css2html(css);	
+	ok(!html[0].id, css);
 });
 
 test('*', function(){

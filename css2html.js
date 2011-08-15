@@ -2,11 +2,11 @@
 	function selectorToNodes(selector){
 		var tag = selector.match(/^\w+/) || ['div'],
 			node = document.createElement(tag[0]),
-			id = selector.match(/#([^.:]+)/);
+			id = selector.match(/#(?![^\[]+[\]])([^.:\[]+)/);
 		if (id)
 			node.id = id[1];
 			
-		var className = selector.match(/\.[^.:#\[]+/g) || [];
+		var className = selector.match(/\.(?![^\[]+[\]])[^.:#\[]+/g) || [];
 		className = className.join('').replace(/\./g, ' ').trim();
 		
 		var attributes = selector.match(/\[[^\]]+\]|:(enabled|disabled|checked)/g) || [];
