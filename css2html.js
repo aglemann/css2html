@@ -35,7 +35,7 @@
 			
 		var array = [];
 		while (n--)
-			array.push(node.cloneNode());
+			array.push(node.cloneNode(false));
 		return array;
 	}
 	
