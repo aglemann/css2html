@@ -8,26 +8,26 @@
   <style type="text/css">
     body {
       margin-top: 1.0em;
-      background-color: #c6697b;
-      font-family: Helvetica, Arial, FreeSans, san-serif;
-      color: #000000;
+      color: #666;
     }
     #container {
       margin: 0 auto;
       width: 700px;
     }
-    h1 { font-size: 3.8em; color: #399684; margin-bottom: 3px; }
+    h1 { font-size: 3.8em; color: #333; margin-bottom: 3px; }
     h1 .small { font-size: 0.4em; }
     h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #399684; }
-    h3 { text-align: center; color: #399684; }
-    a { color: #399684; }
+    h2 { font-size: 1.5em; color: #333; }
+    h3 { text-align: center; color: #333; }
+    a { color: #333; }
     .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
     .download { float: right; }
     pre { background: #000; color: #fff; padding: 15px;}
     hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+	textarea { height: 100px; width: 100%; }
     .footer { text-align:center; padding-top:30px; font-style: italic; }
   </style>
+<script type="text/javascript" charset="utf-8" src="https://github.com/aglemann/css2html/raw/master/css2html.js"></script>
 </head>
 
 <body>
@@ -46,13 +46,31 @@
       <span class="small">by <a href="http://github.com/aglemann">aglemann</a></span></h1>
 
     <div class="description">
-      
+      Generate HTML from CSS rules, in about 1K of Javascript.
     </div>
 
+	<textarea id="css">
+h1 { font-size: 3.8em; color: #333; margin-bottom: 3px; }
+h1 .small { font-size: 0.4em; }
+h1 a { text-decoration: none }
+h2 { font-size: 1.5em; color: #333; }
+h3 { text-align: center; color: #333; }
+a { color: #333; }
+.description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
+.download { float: right; }
+pre { background: #000; color: #fff; padding: 15px;}
+hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+	</textarea>
+	<button type="button" id="css2html">Generate</button>
+	<pre id="html"></pre>
+	
     <h2>Authors</h2>
-<p>Aeron Glemann (aeron.glemann@gmail.com)<br/><br/>      </p>
+<p>Aeron Glemann (aeron.glemann@gmail.com)
+<br/>
+<br/>      </p>
 <h2>Contact</h2>
-<p>Aeron Glemann (aeron.glemann@gmail.com)<br/>      </p>
+<p>Aeron Glemann (aeron.glemann@gmail.com)
+<br/>      </p>
 
 
     <h2>Download</h2>
@@ -72,6 +90,20 @@
 
   </div>
 
-  
+  <script type="text/javascript"> 	
+	var button = document.getElementById('css2html');
+	button.onclick = function(){
+		var css = document.getElementById('css').value;
+		var nodes = css2html(css);
+		var div = document.createElement('div');
+		var html = [];
+		nodes.forEach(function(node){
+			div.appendChild(node);
+			html.push(div.innerHTML);
+			div.innerHTML = '';
+		});
+		document.getElementById('html').innerHTML = html.join('\n').replace(/>/g, '&gt;').replace(/</g, '&lt;');
+	}
+  </script>
 </body>
 </html>
