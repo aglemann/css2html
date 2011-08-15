@@ -131,6 +131,12 @@ test('element,element', function(){
 	equal(html[0].tagName.toLowerCase(), 'a', css);	
 	equal(html[1].tagName.toLowerCase(), 'b', css);	
 	equal(html[2].tagName.toLowerCase(), 'br', css);
+	
+	css = 'p[title*="1, 1"]';
+	html = css2html(css);	
+	equal(html.length, 1, css);
+	equal(html[0].tagName.toLowerCase(), 'p', css);	
+	equal(html[0].title, '1, 1', css);	
 });
 
 test('element element', function(){
@@ -250,10 +256,11 @@ test('element+element', function(){
 	equal(html.length, 3, css);
 	equal(html[0].tagName.toLowerCase(), 'p', css);	
 	
-	css = 'p[title*="1+1"]';
+	css = 'p[title*="1 + 1"]';
 	html = css2html(css);	
 	equal(html.length, 1, css);
 	equal(html[0].tagName.toLowerCase(), 'p', css);	
+	equal(html[0].title, '1 + 1', css);
 });
 
 
@@ -298,10 +305,11 @@ test('element~element', function(){
 	equal(html.length, 1, css);
 	equal(html[0].tagName.toLowerCase(), 'p', css);	
 	
-	css = 'p[title*="1~1"]';
+	css = 'p[title*="1 ~ 1"]';
 	html = css2html(css);	
 	equal(html.length, 1, css);
 	equal(html[0].tagName.toLowerCase(), 'p', css);	
+	equal(html[0].title, '1 ~ 1', css);
 });
 
 test('[attribute]', function(){

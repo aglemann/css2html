@@ -1,21 +1,13 @@
 (function(css2html, container){
-	function clean(str){
-		str = str.replace(/\/\*(.|\n)*?\*\//g, ''); // strip comments
-		str = str.replace(/\s*([,:>+])\s*/g, '$1'); // normalize whitespace
-		str = str.trim();
-		return str;
-	}
-	
 	function selectorToNodes(selector){
-		var tag = selector.match(/^\w+/) || ['div'];
-		var node = document.createElement(tag[0]);
-		
-		var id = selector.match(/#([^.:]+)/);
+		var tag = selector.match(/^\w+/) || ['div'],
+			node = document.createElement(tag[0]),
+			id = selector.match(/#([^.:]+)/);
 		if (id)
 			node.id = id[1];
 			
-		var classes = selector.match(/\.[^.:#\[]+/g) || [];
-		var className = classes.join('').replace(/\./g, ' ').trim();
+		var className = selector.match(/\.[^.:#\[]+/g) || [];
+		className = className.join('').replace(/\./g, ' ').trim();
 		
 		var attributes = selector.match(/\[[^\]]+\]|:(enabled|disabled|checked)/g) || [];
 		attributes.forEach(function(attribute){
@@ -47,27 +39,21 @@
 		return array;
 	}
 	
-	function toArray(collection){
-		return [].slice.call(collection);
-	}
-		
-	container[css2html] = function(str){
+	container[css2html] = function(css){
 		var fragment = document.createElement('div');
-		str = str.replace(/\s+/g, ' '); // remove line breaks
-		str = str.replace(/\{[^}]*\}/g, '\n'); // separate rules onto their own lines
-		var rules = str.split('\n');
-		rules.forEach(function(rule){
-			rule = clean(rule);
-			if (!rule.length)
+		css = css.replace(/\s+/g, ' '); // remove line breaks
+		css = css.replace(/\{[^}]*\}/g, '\n'); // separate rules onto their own lines
+		css.split('\n').forEach(function(rule){
+			rule = rule.replace(/\/\*(.|\n)*?\*\//g, ''); // strip comments
+			rule = rule.replace(/\s*([,:>+](?![^\[]+[\]]))\s*/g, '$1'); // normalize whitespace
+			rule = rule.trim();
+			if (!rule)
 				return;
-			var selectors = rule.split(',');
-			selectors.forEach(function(selector){
-				var siblings = selector.split(/[+~](?![^\(\[]+[\)\]])/);
-				siblings.forEach(function(sibling){
-					var parentNodes = [fragment];
-					var len = 0;
-					var elements = sibling.split(/\s|>/);
-					elements.forEach(function(element){
+			rule.split(/,(?![^\[]+[\]])/).forEach(function(selector){ // separate by commas
+				selector.split(/[+~](?![^\(\[]+[\)\]])/).forEach(function(sibling){ // separate by plus or tilde
+					var parentNodes = [fragment],
+						len = 0; 
+					sibling.split(/[ >](?![^\[]+[\]])/).forEach(function(element){ // sepearet by space or angle bracket
 						len += (len ? 1 : 0) + element.length;
 						var nodes = [];
 						try {
@@ -84,7 +70,7 @@
 								});
 							});
 						}
-						parentNodes = toArray(nodes);
+						parentNodes = [].slice.call(nodes);
 					});
 				});
 			});
