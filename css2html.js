@@ -39,6 +39,10 @@
 		return array;
 	}
 	
+	function toArray(collection){
+		return [].slice.call(collection);
+	}
+	
 	container[css2html] = function(css){
 		var fragment = document.createElement('div');
 		css = css.replace(/\s+/g, ' '); // remove line breaks
@@ -70,11 +74,11 @@
 								});
 							});
 						}
-						parentNodes = [].slice.call(nodes);
+						parentNodes = toArray(nodes);
 					});
 				});
 			});
 		});
-		return fragment.childNodes;
+		return toArray(fragment.childNodes);
 	}
 })('css2html', this);
