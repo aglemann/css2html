@@ -1,6 +1,8 @@
-// http://www.w3schools.com/cssref/css_selectors.asp
-
 var css, html;
+
+module('selectors');
+
+// http://www.w3schools.com/cssref/css_selectors.asp
 
 test('class', function(){
 	css = '.test1';
@@ -178,10 +180,10 @@ test('element element', function(){
 	html = css2html(css);	
 	equal(html.length, 2, css);	
 	equal(html[0].tagName.toLowerCase(), 'a', css);	
-	equal(html[0].className, 'class', css);	
+	equal(html[0].id, 'id', css);	
 	equal(html[0].childNodes[0].tagName.toLowerCase(), 'b', css);
 	equal(html[1].tagName.toLowerCase(), 'a', css);	
-	equal(html[1].id, 'id', css);	
+	equal(html[1].className, 'class', css);	
 	equal(html[1].childNodes[0].tagName.toLowerCase(), 'b', css);
 });
 
@@ -216,10 +218,10 @@ test('element>element', function(){
 	html = css2html(css);	
 	equal(html.length, 2, css);	
 	equal(html[0].tagName.toLowerCase(), 'a', css);	
-	equal(html[0].className, 'class', css);	
+	equal(html[0].id, 'id', css);	
 	equal(html[0].childNodes[0].tagName.toLowerCase(), 'b', css);
 	equal(html[1].tagName.toLowerCase(), 'a', css);	
-	equal(html[1].id, 'id', css);	
+	equal(html[1].className, 'class', css);	
 	equal(html[1].childNodes[0].tagName.toLowerCase(), 'b', css);
 });
 
@@ -254,10 +256,10 @@ test('element+element', function(){
 	html = css2html(css);	
 	equal(html.length, 3, css);	
 	equal(html[0].tagName.toLowerCase(), 'a', css);	
-	equal(html[0].className, 'class', css);	
+	equal(html[0].id, 'id', css);
 	equal(html[1].tagName.toLowerCase(), 'b', css);	
 	equal(html[2].tagName.toLowerCase(), 'a', css);	
-	equal(html[2].id, 'id', css);
+	equal(html[2].className, 'class', css);	
 	
 	css = 'p:nth-child(2n+1)';
 	html = css2html(css);	
@@ -270,7 +272,6 @@ test('element+element', function(){
 	equal(html[0].tagName.toLowerCase(), 'p', css);	
 	equal(html[0].title, '1 + 1', css);
 });
-
 
 test('element~element', function(){
 	css = 'b~br';
@@ -303,10 +304,10 @@ test('element~element', function(){
 	html = css2html(css);	
 	equal(html.length, 3, css);	
 	equal(html[0].tagName.toLowerCase(), 'a', css);	
-	equal(html[0].className, 'class', css);	
+	equal(html[0].id, 'id', css);	
 	equal(html[1].tagName.toLowerCase(), 'b', css);	
 	equal(html[2].tagName.toLowerCase(), 'a', css);	
-	equal(html[2].id, 'id', css);	
+	equal(html[2].className, 'class', css);	
 	
 	css = 'p[title~=flower]';
 	html = css2html(css);	
@@ -354,6 +355,18 @@ test('[attribute]', function(){
 	css = 'a[href*="w3schools"]';
 	html = css2html(css);	
 	ok(/w3schools/.test(html[0].href), css);
+	
+	css = 'a[title="(var)"]';
+	html = css2html(css);
+	ok(/\(var\)/.test(html[0].title), css);
+	
+	css = 'a[title="[var]"]';
+	html = css2html(css);
+	ok(/\[var\]/.test(html[0].title), css);
+	
+	css = 'a[title="{var}"]';
+	html = css2html(css);
+	ok(/\{var\}/.test(html[0].title), css);
 });
 
 test('nth-child(n)', function(){
@@ -428,4 +441,17 @@ test(':checked', function(){
 	equal(html[0].tagName.toLowerCase(), 'input', css);	
 	equal(html[0].type, 'checkbox', css);	
 	ok(html[0].checked, css);
+});
+
+
+module('private methods');
+
+test('populate(node)', function(){
+	css = 'p';
+	html = css2html(css, { populate: true });	
+	equal(html[0].innerHTML, 'Paragraph', css);	
+	
+	css = 'select option';
+	html = css2html(css, { populate: true });	
+	equal(html[0].firstChild.innerHTML, 'Option', css);	
 });

@@ -133,4 +133,4 @@
 		return options.out == 'html' ? fragment.innerHTML 
 			: arrayize(fragment.childNodes);
 	}
-})('css2html', this);
+})('exports', module);
