@@ -367,6 +367,10 @@ test('[attribute]', function(){
 	css = 'a[title="{var}"]';
 	html = css2html(css);
 	ok(/\{var\}/.test(html[0].title), css);
+	
+	css = 'input[readonly]';
+	html = css2html(css);
+	equal(html[0].getAttribute('readonly'), 'readonly', css);	
 });
 
 test('nth-child(n)', function(){
@@ -443,7 +447,6 @@ test(':checked', function(){
 	ok(html[0].checked, css);
 });
 
-
 module('private methods');
 
 test('populate(node)', function(){
@@ -454,4 +457,20 @@ test('populate(node)', function(){
 	css = 'select option';
 	html = css2html(css, { populate: true });	
 	equal(html[0].firstChild.innerHTML, 'Option', css);	
+	
+	css = '.button';
+	html = css2html(css, { populate: true });	
+	equal(html[0].innerHTML, 'Button', css);	
+	
+	css = 'button.checkbox';
+	html = css2html(css, { populate: true });	
+	equal(html[0].innerHTML, 'Button', css);	
+	
+	css = '.btn';
+	html = css2html(css, { populate: true, tags: ['div'] });	
+	equal(html[0].innerHTML, 'Div', css);	
+	
+	css = '.btn';
+	html = css2html(css, { populate: true, tags: ['btn'], expand: { btn: 'button' } });	
+	equal(html[0].innerHTML, 'Button', css);	
 });
