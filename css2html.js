@@ -1,5 +1,6 @@
 (function(css2html, container){
-	var options = {
+	var defaults = {
+		dataAttr: true,
 		expand: { 
 			a: 'anchor', dd: 'description', del: 'deleted', dfn: 'definition', dl: 'definition list', dt: 'term', em: 'emphasized', 
 			h1: 'heading', h2: 'heading', h3: 'heading', h4: 'heading', h5: 'heading', h6: 'heading', ins: 'inserted', li: 'item', 
@@ -52,7 +53,7 @@
 		var array = [];
 		while (n--){
 			var clone = node.cloneNode(false);
-			options.populate && populate(clone);
+			defaults.populate && populate(clone);
 			array.push(clone);
 		}
 		return array;
@@ -61,13 +62,17 @@
 	function parse(css){
 		var doc = 'document' in this ? document : require('jsdom').jsdom('<html><body></body></html>', null, { features: { QuerySelector: true }}),
 			fragment = doc.createElement('div'),
+			abstracts = [],
 			selectors = [];
 
-		css = css
-			.replace(/\s+/g, ' ') // remove line breaks
-			.replace(/\/\*(.|\n)*?\*\//g, ''); // strip comments
+
+		css = css.replace(/\s+/g, ' '); // remove line breaks
 		css.split(/\{(?![^\[]+[\]])[^}]*\}/g).forEach(function(rule, i){
-			rule = rule.replace(/\s*([,:>+](?![^\[]+[\]]))\s*/g, '$1').trim(); // cleanup whitespace
+			var isAbstract = /\/\*[^@]*@abstract/.test(rule);
+			rule = rule
+				.replace(/\/\*(.|\n)*?\*\//g, '') // strip comments
+				.replace(/\s*([,:>+](?![^\[]+[\]]))\s*/g, '$1') // cleanup whitespace
+				.trim(); 
 			if (!rule)
 				return;
 			rule.split(/,(?![^\[]+[\]])/).forEach(function(selector){ // separate by commas
@@ -75,12 +80,15 @@
 					.replace(/(:[:\-])(?![^\[]+[\]])[^ >+~]+/g, '') // strip browser specific selectors
 					.replace(/:(link|visited|active|hover|focus|first-l(etter|ine)|before|after|empty|target)/g, '') // strip pseudo selectors
 					.replace(/\[([^=]+)=([^\]'"]+)\]/, '[$1="$2"]'); // properly format attribute selectors 
-				if (selectors.indexOf(selector) == -1)
-					selectors.push(selector);
+				var array = isAbstract ? abstracts : selectors;
+				if (array.indexOf(selector) == -1)
+					array.push(selector);
 			});
 		});
 
 		selectors.sort().forEach(function(selector){
+			if (abstracts.indexOf(selector) != -1) // skip abstracts
+				return;			
 			selector.split(/[+~](?![^\(\[]+[\)\]])/).forEach(function(sibling){ // separate by plus or tilde
 				var parentNodes = [fragment],
 					len = 0; 
@@ -98,7 +106,7 @@
 						nodes = create(element, doc);
 						parentNodes.forEach(function(parentNode){
 							nodes.forEach(function(node){
-								node.setAttribute('data-selector', substr);
+								defaults.dataAttr && node.setAttribute('data-selector', substr);
 								parentNode.appendChild(node);
 							});
 						});
@@ -113,39 +121,37 @@
 
 	function populate(node){
 		var tags = (node.tagName + ' ' + node.className).toLowerCase().split(/[ -_]/),
-			re = new RegExp('^(' + options.tags.join('|') + ')$');
+			re = new RegExp('^(' + defaults.tags.join('|') + ')$');
 			
 		for (var i = 0, len = tags.length, tag; i < len; i++){
 			if (re.test(tag = tags[i])){
-				tag = options.expand[tag] || tag;
+				tag = defaults.expand[tag] || tag;
 		 		node.innerHTML = tag.replace(/\b[a-z]/g, function(match){ return match.toUpperCase(); }); // capitalize
 				break;
 			}
 		}
 	}
 	
-	function setOptions(opts){
-		options.out = opts.out || options.out;
-		options.populate = opts.populate || options.populate;
-		
-		if (typeof opts.expand == 'object'){
-			for (var i in opts.expand)
-				options.expand[i] = opts.expand[i];
+	function setdefaults(objA, objB){
+		for (var i in objA){
+			if (!objB[i] || typeof objA[i] == typeof objB[i]){
+				if (typeof objA[i] == 'object')
+					setdefaults(objA[i], objB[i]);
+				else
+					objB[i] = objA[i];
+			}
 		}
-		
-		if (opts.tags instanceof Array)
-			options.tags = opts.tags;
 	}
 	
 	function slice(collection){
 		return [].slice.call(collection);
 	}
 
-	container[css2html] = function(css, opts){
-		setOptions(opts || {});
+	container[css2html] = function(css, options){
+		setdefaults(options || {}, defaults);
 
 		var fragment = parse(css);
-		return options.out == 'html' ? fragment.innerHTML 
+		return defaults.out == 'html' ? fragment.innerHTML 
 			: slice(fragment.childNodes);
 	}
 })('css2html', this);

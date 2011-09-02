@@ -1,8 +1,8 @@
 var css, html;
 
-module('selectors');
-
 // http://www.w3schools.com/cssref/css_selectors.asp
+
+module('selectors');
 
 test('class', function(){
 	css = '.test1';
@@ -446,6 +446,35 @@ test(':checked', function(){
 	equal(html[0].type, 'checkbox', css);	
 	ok(html[0].checked, css);
 });
+
+
+module('meta options');
+
+test('@abstract', function(){
+	css = '/* @abstract */ a';
+	html = css2html(css);	
+	ok(!html.length, css);	
+	
+	css = 'a {} /* @abstract */ b {} br {}';
+	html = css2html(css);	
+	equal(html.length, 2, css);
+	equal(html[0].tagName.toLowerCase(), 'a', css);
+	equal(html[1].tagName.toLowerCase(), 'br', css);
+
+	css = '/* @abstract */ a {} a, b {}';
+	html = css2html(css);	
+	equal(html.length, 1, css);
+	equal(html[0].tagName.toLowerCase(), 'b', css);
+
+	css = 'p:after { content: "@abstract" }';
+	html = css2html(css);	
+	equal(html[0].tagName.toLowerCase(), 'p', css);
+	
+	css = 'p[title="@abstract"]';
+	html = css2html(css);	
+	equal(html[0].tagName.toLowerCase(), 'p', css);
+});
+
 
 module('private methods');
 
