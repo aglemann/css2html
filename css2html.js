@@ -65,7 +65,6 @@
 			abstracts = [],
 			selectors = [];
 
-
 		css = css.replace(/\s+/g, ' '); // remove line breaks
 		css.split(/\{(?![^\[]+[\]])[^}]*\}/g).forEach(function(rule, i){
 			var isAbstract = /\/\*[^@]*@abstract/.test(rule);
@@ -73,7 +72,7 @@
 				.replace(/\/\*(.|\n)*?\*\//g, '') // strip comments
 				.replace(/\s*([,:>+](?![^\[]+[\]]))\s*/g, '$1') // cleanup whitespace
 				.trim(); 
-			if (!rule)
+			if (/^(|@.*)$/.test(rule)) // skip empty, @media, @font-face, etc
 				return;
 			rule.split(/,(?![^\[]+[\]])/).forEach(function(selector){ // separate by commas
 				selector = selector
