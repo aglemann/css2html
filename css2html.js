@@ -119,7 +119,7 @@
 	}
 
 	function populate(node){
-		var tags = (node.tagName + ' ' + node.className).toLowerCase().split(/[ -_]/),
+		var tags = (node.tagName + ' ' + node.className).toLowerCase().split(/[ \-_]/),
 			re = new RegExp('^(' + defaults.tags.join('|') + ')$');
 			
 		for (var i = 0, len = tags.length, tag; i < len; i++){

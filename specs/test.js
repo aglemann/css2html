@@ -483,6 +483,10 @@ test('populate(node)', function(){
 	html = css2html(css, { populate: true });	
 	equal(html[0].innerHTML, 'Paragraph', css);	
 	
+	css = 'h1';
+	html = css2html(css, { populate: true });	
+	equal(html[0].innerHTML, 'Heading', css);	
+
 	css = 'select option';
 	html = css2html(css, { populate: true });	
 	equal(html[0].firstChild.innerHTML, 'Option', css);	
