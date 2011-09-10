@@ -67,19 +67,15 @@
 
 		css = css.replace(/\s+/g, ' '); // remove line breaks
 		css.split(/\{(?![^\[]+[\]])[^}]*\}/g).forEach(function(rule, i){
-			var isAbstract = /\/\*[^@]*@abstract/.test(rule);
-			rule = rule
-				.replace(/\/\*(.|\n)*?\*\//g, '') // strip comments
-				.replace(/\s*([,:>+](?![^\[]+[\]]))\s*/g, '$1') // cleanup whitespace
-				.trim(); 
-			if (/^(|@.*)$/.test(rule)) // skip empty, @media, @font-face, etc
+			rule = preProcess(rule);
+			if (!rule)
 				return;
-			rule.split(/,(?![^\[]+[\]])/).forEach(function(selector){ // separate by commas
+			rule.text.split(/,(?![^\[]+[\]])/).forEach(function(selector){ // separate by commas
 				selector = selector
 					.replace(/(:[:\-])(?![^\[]+[\]])[^ >+~]+/g, '') // strip browser specific selectors
 					.replace(/:(link|visited|active|hover|focus|first-l(etter|ine)|before|after|empty|target)/g, '') // strip pseudo selectors
 					.replace(/\[([^=]+)=([^\]'"]+)\]/, '[$1="$2"]'); // properly format attribute selectors 
-				var array = isAbstract ? abstracts : selectors;
+				var array = rule.isAbstract ? abstracts : selectors;
 				if (array.indexOf(selector) == -1)
 					array.push(selector);
 			});
@@ -131,11 +127,23 @@
 		}
 	}
 	
-	function setdefaults(objA, objB){
+	function preProcess(rule){
+		var text = rule
+			.replace(/\/\*(.|\n)*?\*\//g, '') // strip comments
+			.replace(/\s*([,:>+](?![^\[]+[\]]))\s*/g, '$1') // cleanup whitespace
+			.trim();
+		var returns = {
+			isAbstract: /\/\*[^@]*@abstract/.test(rule),
+			text: text
+		};
+		return /^(|@.*)$/.test(text) ? {} : returns; // skip empty, @media, @font-face, etc
+	}
+	
+	function setDefaults(objA, objB){
 		for (var i in objA){
 			if (!objB[i] || typeof objA[i] == typeof objB[i]){
 				if (typeof objA[i] == 'object')
-					setdefaults(objA[i], objB[i]);
+					setDefaults(objA[i], objB[i]);
 				else
 					objB[i] = objA[i];
 			}
@@ -147,7 +155,7 @@
 	}
 
 	container[css2html] = function(css, options){
-		setdefaults(options || {}, defaults);
+		setDefaults(options || {}, defaults);
 
 		var fragment = parse(css);
 		return defaults.out == 'html' ? fragment.innerHTML 

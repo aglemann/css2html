@@ -20,10 +20,20 @@ Generate HTML from CSS rules, in just under 3k of Javascript. Compatible with **
 
 ### Options
 
+* **dataAttr** - (bool: default true) Whether to set an HTML5 data attribute 'data-selector' with the value of the CSS selector. 
 * **expand** - (object: see source for defaults) A map of tags abbreviations and expansions to use with the 'populate' option. For example { p: 'paragraph' }. Any values here will extend the existing defaults.
 * **out** - (string: default nodes) Either 'nodes' to output HTML nodes, or 'html' to output HTML text.
 * **populate** - (bool: default false) Whether to populate HTML with placeholder text.
 * **tags** - (array: see source for default) An array of string or RegExp patterns to use with the 'populate' option. The script will attempt to match the node tag name, then class names, against this array when deciding whether to populate the node. A value here will replace the existing default.
+
+### Preprocessing
+
+The parser has support for optional preprocessor directives included in a valid CSS comment before a given selector:
+
+* **@abstract** - Tells the parser to skip the following selector as it is not intended to be used directly in the HTML, but rather extended by additional selectors:
+
+	/* @abstract */
+	.button-icon { position: relative; }
 
 ### Node.js
 
