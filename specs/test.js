@@ -448,7 +448,13 @@ test(':checked', function(){
 });
 
 
-module('meta options');
+module('preprocessor');
+
+test('@font-face', function(){
+	css = '@font-face {}';
+	html = css2html(css);	
+	ok(!html.length, css);		
+});
 
 test('@abstract', function(){
 	css = '/* @abstract */ a';

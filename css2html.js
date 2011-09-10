@@ -136,7 +136,7 @@
 			isAbstract: /\/\*[^@]*@abstract/.test(rule),
 			text: text
 		};
-		return /^(|@.*)$/.test(text) ? {} : returns; // skip empty, @media, @font-face, etc
+		return /^(|@.*)$/.test(text) ? 0 : returns; // skip empty, @media, @font-face, etc
 	}
 	
 	function setDefaults(objA, objB){

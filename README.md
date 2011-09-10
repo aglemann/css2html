@@ -1,13 +1,13 @@
 css2html
 ===
 
-Generate HTML from CSS rules, in just under 3k of Javascript. Compatible with **Node.js** and the [jsdom](https://github.com/tmpvar/jsdom) module to serve up your CSS stylesheets as HTML styleguides.
+Generate HTML from CSS rules, in 3k of Javascript. Compatible with **Node.js** and the [jsdom](https://github.com/tmpvar/jsdom) module to serve up your CSS stylesheets as HTML styleguides.
 
 ### Features
 
 - Supports type, universal, attribute, class, id, pseudo, descendant, child and sibling selectors.
 - Options to populate generated HTML with placeholder content.
-- 170 unit tests with QUnit.
+- 180 unit tests with QUnit.
 
 ### Syntax
 
