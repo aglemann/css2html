@@ -448,68 +448,36 @@ test(':checked', function(){
 });
 
 
-module('preprocessor');
+module('parse');
 
-test('@font-face', function(){
+test('skip @ prefixed selectors', function(){
 	css = '@font-face {}';
 	html = css2html(css);	
 	ok(!html.length, css);		
 });
 
-test('@abstract', function(){
-	css = '/* @abstract */ a';
-	html = css2html(css);	
-	ok(!html.length, css);	
-	
-	css = 'a {} /* @abstract */ b {} br {}';
-	html = css2html(css);	
-	equal(html.length, 2, css);
-	equal(html[0].tagName.toLowerCase(), 'a', css);
-	equal(html[1].tagName.toLowerCase(), 'br', css);
 
-	css = '/* @abstract */ a {} a, b {}';
-	html = css2html(css);	
-	equal(html.length, 1, css);
-	equal(html[0].tagName.toLowerCase(), 'b', css);
+module('createFragment');
 
-	css = 'p:after { content: "@abstract" }';
+test('multiple nested selectors', function(){
+	css = 'ul li {} nav ul li {}';
 	html = css2html(css);	
-	equal(html[0].tagName.toLowerCase(), 'p', css);
-	
-	css = 'p[title="@abstract"]';
-	html = css2html(css);	
-	equal(html[0].tagName.toLowerCase(), 'p', css);
+	equal(html.length, 2, css);		
+	equal(html[0].tagName.toLowerCase(), 'nav', css);		
+	equal(html[1].tagName.toLowerCase(), 'ul', css);		
 });
 
 
-module('private methods');
+module('populate');
 
-test('populate(node)', function(){
-	css = 'p';
+test('simple selector', function(){
+	css = '.test';
 	html = css2html(css, { populate: true });	
-	equal(html[0].innerHTML, 'Paragraph', css);	
-	
-	css = 'h1';
-	html = css2html(css, { populate: true });	
-	equal(html[0].innerHTML, 'Heading', css);	
+	equal(html[0].innerHTML, css, css);	
+});
 
-	css = 'select option';
+test('nested selectors', function(){
+	css = 'ul li a';
 	html = css2html(css, { populate: true });	
-	equal(html[0].firstChild.innerHTML, 'Option', css);	
-	
-	css = '.button';
-	html = css2html(css, { populate: true });	
-	equal(html[0].innerHTML, 'Button', css);	
-	
-	css = 'button.checkbox';
-	html = css2html(css, { populate: true });	
-	equal(html[0].innerHTML, 'Button', css);	
-	
-	css = '.btn';
-	html = css2html(css, { populate: true, tags: ['div'] });	
-	equal(html[0].innerHTML, 'Div', css);	
-	
-	css = '.btn';
-	html = css2html(css, { populate: true, tags: ['btn'], expand: { btn: 'button' } });	
-	equal(html[0].innerHTML, 'Button', css);	
+	equal(html[0].firstChild.firstChild.innerHTML, css, css);	
 });
