@@ -456,6 +456,13 @@ test('skip @ prefixed selectors', function(){
 	ok(!html.length, css);		
 });
 
+test('skip :root pseudo selector', function(){
+	css = ':root .btn {}';
+	html = css2html(css);	
+	equal(html.length, 1, css);		
+	equal(html[0].className, 'btn', css);		
+});
+
 
 module('createFragment');
 
@@ -480,4 +487,10 @@ test('nested selectors', function(){
 	css = 'ul li a';
 	html = css2html(css, { populate: true });	
 	equal(html[0].firstChild.firstChild.innerHTML, css, css);	
+});
+
+test('self closing tags', function(){
+	css = 'input';
+	html = css2html(css, { populate: true });	
+	equal(html[0].value, css, css);	
 });

@@ -5,6 +5,9 @@
 	    // Intended to be used for presentation or behavior from within the generated HTML.
 		dataAttr: false,
 		
+		// Toggle debug mode and log to the console.
+		debug: false,
+		
 		// What the script should return. Specify either `nodes` to return a DOM fragment or `html` to return a HTML string.
 		out: 'nodes',
 		
@@ -47,7 +50,7 @@
 			id = css2html + (+new Date);
 		fragment.id = id;		
 		selectors.sort().forEach(function(selector) {
-		    
+		    selector = selector.trim();
 		    // Split on sibling selectors.
 			selector.split(/[+~](?![^\(\[]+[\)\]])/).forEach(function(sibling) { 
 				var ancestors = [fragment],
@@ -56,7 +59,8 @@
 				// Split on child or descendant selectors.
 				sibling.split(/[ >](?![^\[]+[\]])/).forEach(function(element) { 
 					len += (len ? 1 : 0) + element.length;
-					var substr = sibling.substr(0, len), nodes;
+					var substr = sibling.substr(0, len), 
+					    nodes = [];
 					
 					// Test if a node for the element has already been created. 
 					// The query looks for the node as a first child of the fragment. 
@@ -65,7 +69,7 @@
 						nodes = fragment.querySelectorAll('#' + id + '>' + substr);
 					}
 					catch(error) {
-						console.error(error);
+						console.error('querySelectorAll: ' + error);
 					}
 					if (!nodes.length) {
 						nodes = [];
@@ -151,6 +155,15 @@
 		}
 		return node;
 	}
+	
+    // debug
+    // --------------
+    // Helper for logging to the console.
+	function debug(str) {
+	    if (defaults.debug && 'console' in this) {
+	        console.log(str);
+	    }
+	}
 
     // parse
     // --------------
@@ -172,6 +185,7 @@
 		// Split on rules.
 		css.split(/\{(?![^\[]+[\]])[^}]*\}/g).forEach(function(rule) {
 		    rule = rule.trim();
+		    debug('rule: ' + rule);
 		    
 		    // Ensure the rule is not empty or an @media, @font-face, etc rule.
 		    if (!(/^(|@.*)$/).test(rule)) {
@@ -184,11 +198,13 @@
     					.replace(/(:[:\-])(?![^\[]+[\]])[^ >+~]+/g, '') 
     					
     					// Strip pseudo selectors.
-    					.replace(/:(link|visited|active|hover|focus|first-l(etter|ine)|before|after|empty|target)/g, '') 
-    					
+    					.replace(/^:root|:(link|visited|active|hover|focus|first-l(etter|ine)|before|after|empty|target)/g, '') 
+
     					// Properly format attribute selectors.
-    					.replace(/\[([^=]+)=([^\]'"]+)\]/, '[$1="$2"]'); 
+    					.replace(/\[([^=]+)=([^\]'"]+)\]/, '[$1="$2"]')
+    					.trim(); 
     				if (selectors.indexOf(selector) === -1) {
+            		    debug('selector: ' + selector);
     				    selectors.push(selector);
     				}
     			});
@@ -207,7 +223,16 @@
 	            populate(node);
 	        }
 	        else {
-	            node.innerHTML = node.__selector__;
+	            var selector = node.__selector__;
+	            if (/^input/.test(selector)) {
+	                node.value = selector;
+	            }
+	            else if (/^img/.test(selector)) {
+	                node.src = selector;
+	            }
+	            else if (!(/^(area|br|col|hr|param)/).test(selector)) {
+    	            node.innerHTML = selector;
+	            }
 	        }
 	    });
 	}
