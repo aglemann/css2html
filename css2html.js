@@ -1,4 +1,15 @@
 (function(css2html, root) {
+    var doc = 'document' in this ? document 
+            : require('jsdom').jsdom('<html><body /></html>', null, { features: { QuerySelector: true }}),
+		parserlib = root.parserlib || require('parserlib'),
+		fragment = doc.createElement('div'),
+		id = css2html + (+new Date),
+		parser = new parserlib.css.Parser();
+    
+    fragment.id = id;
+    parser.addListener('startrule', parseRuleSet);
+    parser.addListener('error', parseError);
+
 	var defaults = {
 	    
 	    // Whether to set a data-* attribute with the text selector for a given node.
@@ -32,208 +43,182 @@
 		for (var prop in options) {
             if (options[prop] !== void 0) defaults[prop] = options[prop];
         }
-		var selectors = parse(css);
-		var fragment = createFragment(selectors);
-		if (defaults.populate) {
-		    populate(fragment);
-		}
+        fragment.innerHTML = '';
+        parser.parse(css);
+        if (defaults.populate) {
+            populate(fragment);
+        }
 		return defaults.out === 'html' ? fragment.innerHTML 
 			: [].slice.call(fragment.childNodes);
 	}
 
-    // createFragment
-    // --------------
-    // Converts an array of string `selectors` to a matching document `fragment`.
-    function createFragment(selectors) {
-        var doc = 'document' in this ? document : require('jsdom').jsdom('<html><body /></html>', null, { features: { QuerySelector: true }}),
-			fragment = doc.createElement('div'),
-			id = css2html + (+new Date);
-		fragment.id = id;		
-		selectors.sort().forEach(function(selector) {
-		    selector = selector.trim();
-		    // Split on sibling selectors.
-			selector.split(/[+~](?![^\(\[]+[\)\]])/).forEach(function(sibling) { 
-				var ancestors = [fragment],
-					len = 0; 
-					
-				// Split on child or descendant selectors.
-				sibling.split(/[ >](?![^\[]+[\]])/).forEach(function(element) { 
-					len += (len ? 1 : 0) + element.length;
-					var substr = sibling.substr(0, len), 
-					    nodes = [];
-					
-					// Test if a node for the element has already been created. 
-					// The query looks for the node as a first child of the fragment. 
-					// This way `ul` and `nav ul` will always create distinct nodes.
-					try {
-						nodes = fragment.querySelectorAll('#' + id + '>' + substr);
-					}
-					catch(error) {
-						console.error('querySelectorAll: ' + error);
-					}
-					if (!nodes.length) {
-						nodes = [];
-					    node = createNode(element, doc);
-					    if (defaults.dataAttr) {
-					        node.setAttribute('data-selector', substr);
-					    }
-					    
-                		// Test for various child pseudo selectors and always create enough nodes to match the selector.
-                		// Plus one more to illustrate variation.
-                		var n = (element.match(/:nth[^(]+\(([^)]+)\)/)); 
-                		n = n ? (parseInt(n[1], 10) || 1) + 1
-                    		: /:(first|last)-(of|child)/.test(element) ? 2
-                    		: /^li/.test(element) ? 2
-                			: 1;
-						ancestors.forEach(function(ancestor) {
-                    		var i = n;
-                    		while (i--) {
-                    		    var child = node.cloneNode(false);
-                    		    
-                    		    // Remember the selector for populating the node.
-        					    child.__selector__ = substr;
-								ancestor.appendChild(child);
-                    			nodes.push(child);
-                    		}
-						});
-					}
-					ancestors = [].slice.call(nodes);
-				});
-			});
-		});
-		return fragment;
-    }
-
     // createNode
     // --------------
-    // Converts a string `selector` and document instance `doc` to a matching DOM `node`.
-	function createNode(selector, doc) {
-		var tag = selector.match(/^\w+/) || ['div'],
-			node = doc.createElement(tag[0]);
-		
-		// Test for an id in the selector, set to the node if matched.
-		var id = selector.match(/#(?![^\[]+[\]])([^.:\[]+)/);
-		if (id) {
-		    node.id = id[1];
-		}
-		
-		// Test for class names in the selector.
-		var className = selector.match(/\.(?![^\[]+[\]])[^.:#\[]+/g) || [];
-		className = className.join('').replace(/\./g, ' ').trim();
+    // Converts a SelectorPart `part` into a DOM `node`.
+	function createNode(part) {
+	    var node = doc.createElement(part.elementName && part.elementName !== '*' ? part.elementName.text : 'div');
+	    part.modifiers.forEach(function(modifier) {
+            var text = modifier.text;
+            switch (modifier.type) {
+                case 'attribute':
+                
+                    // Test for `[attr]` selector.
+                    if (/^\[([^=]+)\]$/.test(text)) {
+                        node.setAttribute(RegExp.$1, RegExp.$1);                        
+                    }
+                    
+                    // Test for `[attr="value"]` selector.
+                    else if (/^\[([^=]+?)[~|^$*]?=(.+)\]$/.test(text)) {
+					    var attr = RegExp.$1,
+					        value = RegExp.$2.replace(/^['"]|['"]$/g, '');
+					        
+                        // If the attribute is a class name add to the string of class names.
+                        if (attr === 'className') {
+                            node.className += (node.className ? ' ' : '') + value;
+                        }
 
-        // Test for attributes in the selector.
-		var attributes = selector.match(/\[([^\]'"]+(['"])[^\2]+\2|[^\]'"]+)\]|:(enabled|disabled|checked)/g) || [];
-		attributes.forEach(function(attribute) {
-		    
-		    // Strip colons, brackets and quotes from attributes.
-			attribute = attribute.replace(/^[:\[]|['"]|[\]]$/g, ''); 
-			
-			// Split attributes into name => value pairs.
-			var pairs = attribute.split(/[~|\^$*]?=/);
-			
-			// If the attribute is a class name add to the string of class names.
-			if (pairs[0] === 'className') {
-			    if (pairs[1]) {
-			        className += (className ? ' ' : '') + pairs[1];
-			    }
-			}
-			
-			// If the attribute is an id, set to the node.
-			else if (pairs[0] === 'id') {
-			    if (pairs[1]) {
-			        node.id = pairs[1];
-			    }
-			}
-			
-			// Otherwise set the attribute to the node.
-			else {
-				node.setAttribute(pairs[0], pairs[1] || pairs[0]);
-			}
-		});
-		if (className) {
-		    node.className = className;
-		}
+                        // If the attribute is an id, set to the node.
+                        else if (attr === 'id') {
+                            node.id = value;
+                        }
+
+                        // Otherwise set the attribute to the node.
+                        else {
+                            node.setAttribute(attr, value);
+                        }					
+					}
+                    break;
+                case 'class':
+                    node.className += (node.className ? ' ' : '') + text.substr(1);
+                    break;
+                case 'id':    
+                    node.id = text.substr(1);
+                    break;
+                case 'pseudo':
+                
+                    // Test for `:lang(code)` pseudo class.
+    			    if (/^:lang\((\w{2})\)$/.test(text)) {
+                        node.setAttribute('lang', RegExp.$1);    			        
+    			    }
+    			    
+    			    // Test for other supported psuedo classes.
+    			    else if (/^:(checked|default|disabled|enabled|indeterminate|invalid|optional|required|valid)$/.test(text)) {
+                        node.setAttribute(RegExp.$1, RegExp.$1);    			        
+    			    }                
+                    break;
+            }
+        });
 		return node;
 	}
 	
-    // debug
-    // --------------
-    // Helper for logging to the console.
-	function debug(str) {
-	    if (defaults.debug && 'console' in this) {
-	        console.log(str);
-	    }
-	}
+    function parseError(error) {
+        report(error.message);
+    }
 
-    // parse
+    // parseRuleSet
     // --------------
-    // Converts a string stylesheet `css` to an array of string `selectors`.
-    // Does stuff like normalize syntax, cleanup whitespace and strip comments and un-used selectors.
-	function parse(css) {
-		var selectors = [];
-		css = css
-		
-		    // Remove line breaks.
-		    .replace(/\s+/g, ' ')
-		    
-	        // Strip comments.
-			.replace(/\/\*(.|\n)*?\*\//g, '') 
-			
-			// Cleanup whitespace.
-			.replace(/\s*([,:>+](?![^\[]+[\]]))\s*/g, '$1');
-		
-		// Split on rules.
-		css.split(/\{(?![^\[]+[\]])[^}]*\}/g).forEach(function(rule) {
-		    rule = rule.trim();
-		    debug('rule: ' + rule);
-		    
-		    // Ensure the rule is not empty or an @media, @font-face, etc rule.
-		    if (!(/^(|@.*)$/).test(rule)) {
-		        
-		        // Split on multiple selectors.
-    			rule.split(/,(?![^\[]+[\]])/).forEach(function(selector) { 
-    				selector = selector
-    				
-    				    // Strip browser specific selectors.
-    					.replace(/(:[:\-])(?![^\[]+[\]])[^ >+~]+/g, '') 
-    					
-    					// Strip pseudo selectors.
-    					.replace(/^:root|:(link|visited|active|hover|focus|first-l(etter|ine)|before|after|empty|target)/g, '') 
+    // Parses a `ruleset` collection of selectors, creating DOM nodes.
+	function parseRuleSet(ruleset) {
+	    ruleset.selectors.forEach(function(selector) {
+            console.log(selector);
+	        var queryString = '',
+	            nodes = [],
+	            parents = [fragment],
+	            grandParents = [];
+	        selector.parts.forEach(function(part) {
+	            var text = part.text
 
-    					// Properly format attribute selectors.
-    					.replace(/\[([^=]+)=([^\]'"]+)\]/, '[$1="$2"]')
-    					.trim(); 
-    				if (selectors.indexOf(selector) === -1) {
-            		    debug('selector: ' + selector);
-    				    selectors.push(selector);
-    				}
-    			});
-		    }
-		});
-		return selectors;
+        		    // Strip browser specific selectors.
+        			.replace(/(:[:\-])(?![^\[]+[\]])[^ >+~]+/g, '') 
+
+        			// Strip pseudo elements and classes.
+        			.replace(/:(active|after|before|empty|first-(letter|line)|focus|hover|link|visited)(?![^\[]+[\]])/g, '') 
+
+                    // Strip html (root) and body selectors.
+                    .replace(/^((:root|html)([ >]body|)|body)/g, '');
+                console.log(text);
+                if (text.length) {
+    	            queryString += text;
+    	            if (part instanceof parserlib.css.SelectorPart) {
+    					try {
+    						nodes = fragment.querySelectorAll('#' + id + '>' + queryString);
+    					}
+    					catch(error) {
+    					    error.queryString = queryString;
+    						report(error);
+    					}
+    					if (!nodes.length) {
+    					    var node = createNode(part);
+    					    if (defaults.dataAttr) {
+    					        node.setAttribute('data-selector', queryString);
+    					    }
+                            console.log(text);
+    					    // Test for various child pseudo classes and ensure enough nodes exist to match the selectors.
+                    		// Plus one more to illustrate variation.
+        					var n = (text.match(/:nth[^(]+\(([^)]+)\)(?![^\[]+[\]])/));
+                    		n = n ? (parseInt(n[1], 10) || 1) + 1
+                        		: /:(first|last)-(of|child)(?![^\[]+[\]])/.test(text) ? 2
+                    			: 1;
+        					nodes = [];
+        					parents.forEach(function(parent) {
+                        		var i = n;
+                        		while (i--) {
+                        		    var child = node.cloneNode(false);
+
+                        		    // Remember the selector for populating the node.
+            					    child.__selectorPart__ = text;
+        							parent.appendChild(child);
+                        			nodes.push(child);
+                        		}
+        					});
+    					}
+    					grandParents = parents;
+    					parents = [].slice.call(nodes);
+    	            }
+    	            if (part instanceof parserlib.css.Combinator) {
+                        if (/[+~]/.test(text)) {
+                            
+                            // If it's a sibling selector we need to make sure the sibling nodes 
+                            // are inserted into the parent not the sibling.
+                            parents = grandParents;
+                        }
+    	            }
+                }
+	        });
+	    });
 	}
 	
     // populate
     // --------------
-    // Optionally populates the generated `fragment` with content.
-	function populate(fragment) {
-	    var nodes = [].slice.call(fragment.childNodes);
-	    nodes.forEach(function(node) {
-	        if (node.childNodes.length) {
-	            populate(node);
+    // Optionally populates the leaf nodes of a fragment with content.
+	function populate(node) {
+	    var childNodes = [].slice.call(node.childNodes);
+	    childNodes.forEach(function(childNode) {
+	        if (childNode.childNodes.length) {
+	            populate(childNode);
 	        }
 	        else {
-	            var selector = node.__selector__;
-	            if (/^input/.test(selector)) {
-	                node.value = selector;
+	            var part = childNode.__selectorPart__,
+	                tag = childNode.tagName;
+	            if ((/input/i).test(tag)) {
+	                childNode.value = part;
 	            }
-	            else if (/^img/.test(selector)) {
-	                node.src = selector;
+	            else if ((/img/i).test(tag)) {
+	                childNode.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAABJJREFUeF4FwIEIAAAAAKD9qY8AAgABdDtSRwAAAABJRU5ErkJggg==';
 	            }
-	            else if (!(/^(area|br|col|hr|param)/).test(selector)) {
-    	            node.innerHTML = selector;
+	            else if (!(/(area|br|col|hr|param)/i).test(tag)) {
+    	            childNode.innerHTML = part;
 	            }
 	        }
 	    });
+	}
+	
+	// report
+    // --------------
+    // Helper for logging to the console.
+	function report(message) {
+	    if (defaults.debug && 'console' in this) {
+	        console.log(message);
+	    }
 	}
 })('css2html', this);
