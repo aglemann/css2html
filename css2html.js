@@ -120,7 +120,6 @@
     // Parses a `ruleset` collection of selectors, creating DOM nodes.
 	function parseRuleSet(ruleset) {
 	    ruleset.selectors.forEach(function(selector) {
-            console.log(selector);
 	        var queryString = '',
 	            nodes = [],
 	            parents = [fragment],
@@ -136,7 +135,6 @@
 
                     // Strip html (root) and body selectors.
                     .replace(/^((:root|html)([ >]body|)|body)/g, '');
-                console.log(text);
                 if (text.length) {
     	            queryString += text;
     	            if (part instanceof parserlib.css.SelectorPart) {
@@ -152,7 +150,6 @@
     					    if (defaults.dataAttr) {
     					        node.setAttribute('data-selector', queryString);
     					    }
-                            console.log(text);
     					    // Test for various child pseudo classes and ensure enough nodes exist to match the selectors.
                     		// Plus one more to illustrate variation.
         					var n = (text.match(/:nth[^(]+\(([^)]+)\)(?![^\[]+[\]])/));
