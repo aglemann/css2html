@@ -126,6 +126,11 @@ test('element', function(){
 	css = '.class#id';
 	html = css2html(css);	
 	equal(html[0].tagName.toLowerCase(), 'div', css);
+	
+	// https://github.com/aglemann/css2html/issues/1
+	css = 'li';
+	html = css2html(css);	
+	equal(html.length, 1, css);
 });
 
 test('element,element', function(){
@@ -271,6 +276,11 @@ test('element+element', function(){
 	equal(html.length, 1, css);
 	equal(html[0].tagName.toLowerCase(), 'p', css);	
 	equal(html[0].title, '1 + 1', css);
+	
+	// https://github.com/aglemann/css2html/issues/2
+	css = 'span+span';
+	html = css2html(css);	
+	equal(html.length, 2, css);
 });
 
 test('element~element', function(){
@@ -318,7 +328,12 @@ test('element~element', function(){
 	html = css2html(css);	
 	equal(html.length, 1, css);
 	equal(html[0].tagName.toLowerCase(), 'p', css);	
-	equal(html[0].title, '1 ~ 1', css);
+	equal(html[0].title, '1 ~ 1', css);	
+	
+	// https://github.com/aglemann/css2html/issues/3
+	css = 'span~span';
+	html = css2html(css);	
+	equal(html.length, 2, css);
 });
 
 test('[attribute]', function(){
@@ -394,6 +409,12 @@ test(':attribute', function(){
 	html = css2html(css);	
 	equal(html[0].tagName.toLowerCase(), 'p', css);	
 	equal(html[0].lang, 'en', css);	
+	
+	// https://github.com/aglemann/css2html/issues/4
+	css = 'div:not(#x) > div#x';
+	html = css2html(css);	
+	ok(!html[0].id, css);	
+	equal(html[0].firstChild.id, 'x', css);	
 });
 
 test('nth-child(n)', function(){
