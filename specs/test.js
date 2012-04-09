@@ -572,38 +572,38 @@ test('relations', function(){
 	equal(html[0].tagName.toLowerCase(), 'table', css);		
 	equal(html[0].firstChild.tagName.toLowerCase(), 'tbody', css);		
 
-    // css = 'tr';
-    // html = css2html(css);    
-    // equal(html.length, 1, css);      
-    // equal(html[0].tagName.toLowerCase(), 'table', css);      
-    // equal(html[0].firstChild.tagName.toLowerCase(), 'tbody', css);       
-    // equal(html[0].firstChild.firstChild.tagName.toLowerCase(), 'tr', css);       
-    // 
-    // css = 'td';
-    // html = css2html(css);    
-    // equal(html.length, 1, css);      
-    // equal(html[0].tagName.toLowerCase(), 'table', css);      
-    // equal(html[0].firstChild.tagName.toLowerCase(), 'tbody', css);       
-    // equal(html[0].firstChild.firstChild.tagName.toLowerCase(), 'tr', css);       
-    // equal(html[0].firstChild.firstChild.firstChild.tagName.toLowerCase(), 'td', css);        
-    // 
-    // css = 'li';
-    // html = css2html(css);    
-    // equal(html.length, 1, css);      
-    // equal(html[0].tagName.toLowerCase(), 'ul', css);     
-    // equal(html[0].firstChild.tagName.toLowerCase(), 'li', css);  
-    //  
-    // css = 'table {} table.test {} td';
-    // html = css2html(css);    
-    // equal(html.length, 2, css);      
-    // equal(html[0].tagName.toLowerCase(), 'table', css);      
-    // equal(html[0].firstChild.tagName.toLowerCase(), 'tbody', css);       
-    // equal(html[0].firstChild.firstChild.tagName.toLowerCase(), 'tr', css);       
-    // equal(html[0].firstChild.firstChild.firstChild.tagName.toLowerCase(), 'td', css);        
-    // equal(html[1].className, 'test', css);       
-    // equal(html[1].firstChild.tagName.toLowerCase(), 'tbody', css);       
-    // equal(html[1].firstChild.firstChild.tagName.toLowerCase(), 'tr', css);       
-    // equal(html[1].firstChild.firstChild.firstChild.tagName.toLowerCase(), 'td', css);        
+    css = 'tr';
+    html = css2html(css);    
+    equal(html.length, 1, css);      
+    equal(html[0].tagName.toLowerCase(), 'table', css);      
+    equal(html[0].firstChild.tagName.toLowerCase(), 'tbody', css);       
+    equal(html[0].firstChild.firstChild.tagName.toLowerCase(), 'tr', css);       
+    
+    css = 'td';
+    html = css2html(css);    
+    equal(html.length, 1, css);      
+    equal(html[0].tagName.toLowerCase(), 'table', css);      
+    equal(html[0].firstChild.tagName.toLowerCase(), 'tbody', css);       
+    equal(html[0].firstChild.firstChild.tagName.toLowerCase(), 'tr', css);       
+    equal(html[0].firstChild.firstChild.firstChild.tagName.toLowerCase(), 'td', css);        
+    
+    css = 'li';
+    html = css2html(css);    
+    equal(html.length, 1, css);      
+    equal(html[0].tagName.toLowerCase(), 'ul', css);     
+    equal(html[0].firstChild.tagName.toLowerCase(), 'li', css);  
+     
+    css = 'table {} table.test {} td';
+    html = css2html(css);    
+    equal(html.length, 2, css);      
+    equal(html[0].tagName.toLowerCase(), 'table', css);      
+    equal(html[0].firstChild.tagName.toLowerCase(), 'tbody', css);       
+    equal(html[0].firstChild.firstChild.tagName.toLowerCase(), 'tr', css);       
+    equal(html[0].firstChild.firstChild.firstChild.tagName.toLowerCase(), 'td', css);        
+    equal(html[1].className, 'test', css);       
+    equal(html[1].firstChild.tagName.toLowerCase(), 'tbody', css);       
+    equal(html[1].firstChild.firstChild.tagName.toLowerCase(), 'tr', css);       
+    equal(html[1].firstChild.firstChild.firstChild.tagName.toLowerCase(), 'td', css);        
 });
 
 

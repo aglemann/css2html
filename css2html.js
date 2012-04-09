@@ -4,27 +4,31 @@
 		parserlib = root.parserlib || require('parserlib'),
 		fragment = doc.createElement('div'),
 		id = css2html + (+new Date),
-		parser = new parserlib.css.Parser();
+		parser = new parserlib.css.Parser(),
+		defaults = {
+            
+            // Automatically expand selectors into valid DOM trees. 
+            // For example, a selector `li` would create a DOM tree of `UL > LI`.
+            // A selector `div td a` would create a DOM tree of `DIV > TABLE > TBODY > TR > TD > A`.
+            autoExpand: true,
+
+    	    // Whether to set a data-* attribute with the text selector for a given node.
+    	    // Intended to be used for presentation or behavior from within the generated HTML.
+    		dataAttr: false,
+
+    		// Toggle debug mode and log to the console.
+    		debug: false,
+
+    		// What the script should return. Specify either `nodes` to return a DOM fragment or `html` to return a HTML string.
+    		out: 'nodes',
+
+    		// Whether the script should populate the generated HTML with placeholder content.
+    		populate: false
+    	};
     
     fragment.id = id;
     parser.addListener('startrule', parseRuleSet);
     parser.addListener('error', parseError);
-
-	var defaults = {
-	    
-	    // Whether to set a data-* attribute with the text selector for a given node.
-	    // Intended to be used for presentation or behavior from within the generated HTML.
-		dataAttr: false,
-		
-		// Toggle debug mode and log to the console.
-		debug: false,
-		
-		// What the script should return. Specify either `nodes` to return a DOM fragment or `html` to return a HTML string.
-		out: 'nodes',
-		
-		// Whether the script should populate the generated HTML with placeholder content.
-		populate: false
-	}
 
     // Test if we're running server-side.
     if (typeof exports !== 'undefined') {
@@ -56,7 +60,7 @@
     // --------------
     // Converts a SelectorPart `part` into a DOM `node`.
 	function createNode(part) {
-	    var node = doc.createElement(part.elementName && part.elementName !== '*' ? part.elementName.text : 'div');
+	    var node = doc.createElement(tagName(part));
 	    part.modifiers.forEach(function(modifier) {
             var text = modifier.text;
             switch (modifier.type) {
@@ -111,6 +115,39 @@
 		return node;
 	}
 	
+    // expand
+    // --------------
+    // Expand selectors into valid DOM trees. 
+	function expand(parts) {
+	    var relations = {
+                caption: 'table', command: 'menu', dd: 'dl', dt: 'dl', figcaption: 'figure', li: 'ul', option: 'select', summary: 'details', td: 'tr', th: 'tr', tr: 'tbody', tbody: 'table', tfoot: 'table', thead: 'table'
+            },
+            expandedParts = [],
+            parent,
+            child,
+            relation,
+            missing;
+	    parts.forEach(function(part) {
+            if (part instanceof parserlib.css.SelectorPart) {
+	            parent = child;
+	            child = tagName(part);
+	            relation = relations[child];
+	            missing = [];
+	            while (relation && relation != parent) {
+	                missing.push(new parserlib.css.Combinator('>'));
+	                missing.push(new parserlib.css.SelectorPart({ text: relation }, [], relation));
+	                parent = relation;
+	                relation = relations[relation];
+	            }
+	            expandedParts.push.apply(expandedParts, missing.reverse());
+	        }
+	        expandedParts.push(part);
+	    });
+	    return expandedParts;
+	}
+	
+    // parseError
+    // --------------
     function parseError(error) {
         report(error.message);
     }
@@ -122,65 +159,65 @@
 	    ruleset.selectors.forEach(function(selector) {
 	        var queryString = '',
 	            nodes = [],
-	            parents = [fragment],
-	            grandParents = [];
-	        selector.parts.forEach(function(part) {
+	            targets = [fragment],
+	            parts = defaults.autoExpand ? expand(selector.parts) : selector.parts;
+	        parts.forEach(function(part) {
 	            var text = part.text
 
         		    // Strip browser specific selectors.
         			.replace(/(:[:\-])(?![^\[]+[\]])[^ >+~]+/g, '') 
 
         			// Strip pseudo elements and classes.
-        			.replace(/:(active|after|before|empty|first-(letter|line)|focus|hover|link|visited)(?![^\[]+[\]])/g, '') 
+        			.replace(/:(active|after|before|empty|first-letter|first-line|focus|hover|link|visited)(?![^\[]+[\]])/g, '') 
 
                     // Strip html (root) and body selectors.
                     .replace(/^((:root|html)([ >]body|)|body)/g, '');
-                if (text.length) {
-    	            queryString += text;
-    	            if (part instanceof parserlib.css.SelectorPart) {
-    					try {
-    						nodes = fragment.querySelectorAll('#' + id + '>' + queryString);
-    					}
-    					catch(error) {
-    					    error.queryString = queryString;
-    						report(error);
-    					}
-    					if (!nodes.length) {
-    					    var node = createNode(part);
-    					    if (defaults.dataAttr) {
-    					        node.setAttribute('data-selector', queryString);
-    					    }
-    					    // Test for various child pseudo classes and ensure enough nodes exist to match the selectors.
-                    		// Plus one more to illustrate variation.
-        					var n = (text.match(/:nth[^(]+\(([^)]+)\)(?![^\[]+[\]])/));
-                    		n = n ? (parseInt(n[1], 10) || 1) + 1
-                        		: /:(first|last)-(of|child)(?![^\[]+[\]])/.test(text) ? 2
-                    			: 1;
-        					nodes = [];
-        					parents.forEach(function(parent) {
-                        		var i = n;
-                        		while (i--) {
-                        		    var child = node.cloneNode(false);
-
-                        		    // Remember the selector for populating the node.
-            					    child.__selectorPart__ = text;
-        							parent.appendChild(child);
-                        			nodes.push(child);
-                        		}
-        					});
-    					}
-    					grandParents = parents;
-    					parents = [].slice.call(nodes);
-    	            }
-    	            if (part instanceof parserlib.css.Combinator) {
-                        if (/[+~]/.test(text)) {
-                            
-                            // If it's a sibling selector we need to make sure the sibling nodes 
-                            // are inserted into the parent not the sibling.
-                            parents = grandParents;
-                        }
-    	            }
+                if (!text) {
+                    return;
                 }
+	            queryString += text;
+	            if (part instanceof parserlib.css.SelectorPart) {
+					try {
+						nodes = fragment.querySelectorAll('#' + id + '>' + queryString);
+					}
+					catch(error) {
+					    error.queryString = queryString;
+						report(error);
+					}
+					if (!nodes.length) {
+					    var node = createNode(part);
+					    if (defaults.dataAttr) {
+					        node.setAttribute('data-selector', queryString);
+					    }
+					    
+					    // Test for various child pseudo classes and ensure enough nodes exist to match the selectors.
+                		// Plus one more to illustrate variation.
+    					var n = (text.match(/:nth[^(]+\(([^)]+)\)(?![^\[]+[\]])/));
+                		n = n ? (parseInt(n[1], 10) || 1) + 1
+                    		: /:(first|last)-(of|child)(?![^\[]+[\]])/.test(text) ? 2
+                			: 1;
+    					nodes = [];
+    					targets.forEach(function(target) {
+                    		var i = n;
+                    		while (i--) {
+                    		    var clone = node.cloneNode(false);
+
+                    		    // Remember the selector for populating the node.
+        					    clone.__selectorPart__ = text;
+    							target.appendChild(clone);
+                    			nodes.push(clone);
+                    		}
+    					});
+					}
+	            }
+	            else if (part instanceof parserlib.css.Combinator) {
+                    if (/[> ]/.test(text)) {
+                        
+                        // If it's a `descendant` or `child` combinator 
+                        // then the current nodes become the next targets.
+                        targets = [].slice.call(nodes);
+                    }
+	            }
 	        });
 	    });
 	}
@@ -217,5 +254,13 @@
 	    if (defaults.debug && 'console' in this) {
 	        console.log(message);
 	    }
+	}
+	
+	// tagName
+    // --------------
+    // Helper for parsing out the tagName of a selector part.
+	function tagName(part) {
+	    var tag = part.elementName && part.elementName !== '*' ? part.elementName.text : 'div';
+	    return tag.toLowerCase();
 	}
 })('css2html', this);
