@@ -20,6 +20,7 @@ Generate HTML from CSS rules. Compatible with **Node.js** and the [jsdom](https:
 
 ### Options
 
+* **autoExpand** - (bool: default `true`) Whether to expand selectors into valid DOM trees. 
 * **dataAttr** - (bool: default `false`) Whether to set an HTML5 data attribute 'data-selector' with the value of the CSS selector. 
 * **debug** - (bool: default `false`) Whether to log debugging/error messages to a console (if one is available). 
 * **out** - (string: default `nodes`) Either 'nodes' to output HTML nodes, or 'html' to output HTML text.
